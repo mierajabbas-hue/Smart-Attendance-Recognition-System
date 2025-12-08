@@ -39,21 +39,21 @@ def generate_sample_data():
                 "name": "John Doe",
                 "email": "john.doe@company.com",
                 "role": "employee",
-                "department": "IT Department"
+                "department": "Computer Science"
             },
             {
                 "user_id": "EMP002",
                 "name": "Jane Smith",
                 "email": "jane.smith@company.com",
                 "role": "employee",
-                "department": "HR Department"
+                "department": "CyberSecurity"
             },
             {
                 "user_id": "EMP003",
                 "name": "Mike Johnson",
                 "email": "mike.johnson@company.com",
                 "role": "employee",
-                "department": "IT Department"
+                "department": "Medical Informatics"
             },
             {
                 "user_id": "STU001",
@@ -67,14 +67,14 @@ def generate_sample_data():
                 "name": "Bob Wilson",
                 "email": "bob.wilson@school.com",
                 "role": "student",
-                "department": "Engineering"
+                "department": "CyberSecurity"
             },
             {
                 "user_id": "STU003",
                 "name": "Carol Davis",
                 "email": "carol.davis@school.com",
                 "role": "student",
-                "department": "Computer Science"
+                "department": "Medical Informatics"
             },
         ]
 

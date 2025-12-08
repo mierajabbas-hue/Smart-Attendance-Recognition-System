@@ -13,7 +13,7 @@ import asyncio
 import numpy as np
 from typing import Optional, Generator
 from backend.config import settings
-from backend.services.face_recognition_service import face_recognition_service
+from backend.services.face_recognition_service import face_recognition_service, FACE_RECOGNITION_AVAILABLE
 
 
 class CameraService:
@@ -29,6 +29,9 @@ class CameraService:
 
     def start_camera(self, camera_id: Optional[int] = None):
         """Start camera capture"""
+        if not OPENCV_AVAILABLE:
+            raise Exception("OpenCV is not installed. Camera features are disabled.")
+
         if camera_id is not None:
             self.camera_id = camera_id
 
@@ -77,12 +80,18 @@ class CameraService:
             if frame is None:
                 break
 
-            if recognize:
+            if recognize and FACE_RECOGNITION_AVAILABLE:
                 # Perform face recognition
                 results = face_recognition_service.recognize_faces(frame)
 
                 # Draw bounding boxes
                 frame = face_recognition_service.draw_bounding_boxes(frame, results)
+            elif recognize and not FACE_RECOGNITION_AVAILABLE:
+                # Add text overlay indicating face recognition is disabled
+                cv2.putText(frame, "Face Recognition Disabled", (10, 30),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                cv2.putText(frame, "Manual Attendance Verification Required", (10, 60),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
             # Encode frame as JPEG
             ret, buffer = cv2.imencode('.jpg', frame)
@@ -107,12 +116,18 @@ class CameraService:
             if frame is None:
                 break
 
-            if recognize:
+            if recognize and FACE_RECOGNITION_AVAILABLE:
                 # Perform face recognition
                 results = face_recognition_service.recognize_faces(frame)
 
                 # Draw bounding boxes
                 frame = face_recognition_service.draw_bounding_boxes(frame, results)
+            elif recognize and not FACE_RECOGNITION_AVAILABLE:
+                # Add text overlay indicating face recognition is disabled
+                cv2.putText(frame, "Face Recognition Disabled", (10, 30),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                cv2.putText(frame, "Manual Attendance Verification Required", (10, 60),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
             # Encode frame as JPEG
             ret, buffer = cv2.imencode('.jpg', frame)
@@ -146,10 +161,18 @@ class CameraService:
 
     def get_camera_info(self) -> dict:
         """Get camera information"""
+        if not OPENCV_AVAILABLE:
+            return {
+                "is_running": False,
+                "camera_id": self.camera_id,
+                "opencv_available": False
+            }
+
         if self.camera is None:
             return {
                 "is_running": False,
-                "camera_id": self.camera_id
+                "camera_id": self.camera_id,
+                "opencv_available": True
             }
 
         return {
@@ -157,7 +180,8 @@ class CameraService:
             "camera_id": self.camera_id,
             "width": int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH)),
             "height": int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-            "fps": int(self.camera.get(cv2.CAP_PROP_FPS))
+            "fps": int(self.camera.get(cv2.CAP_PROP_FPS)),
+            "opencv_available": True
         }
 
     def __del__(self):

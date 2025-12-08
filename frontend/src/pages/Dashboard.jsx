@@ -33,13 +33,25 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+  // Skeleton Components
+  const StatCardSkeleton = () => (
+    <div className="card animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+          <div className="h-8 bg-gray-200 rounded w-16"></div>
+        </div>
+        <div className="w-16 h-16 bg-gray-200 rounded-xl"></div>
       </div>
-    );
-  }
+    </div>
+  );
+
+  const ChartSkeleton = () => (
+    <div className="card animate-pulse">
+      <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+      <div className="h-64 bg-gray-200 rounded"></div>
+    </div>
+  );
 
   const statCards = [
     {
@@ -121,52 +133,69 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {statCards.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="card hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                </div>
-                <div className={`${stat.color} p-4 rounded-xl`}>
-                  <Icon className="w-8 h-8 text-white" />
+        {loading ? (
+          <>
+            {[...Array(6)].map((_, i) => (
+              <StatCardSkeleton key={i} />
+            ))}
+          </>
+        ) : (
+          statCards.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <div key={index} className="card hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
+                  </div>
+                  <div className={`${stat.color} p-4 rounded-xl`}>
+                    <Icon className="w-8 h-8 text-white" />
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Role Distribution */}
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">User Distribution</h2>
-          <div className="flex justify-center">
-            <div className="w-64 h-64">
-              <Doughnut data={roleChartData} options={{ maintainAspectRatio: true }} />
+        {loading ? (
+          <>
+            <ChartSkeleton />
+            <ChartSkeleton />
+          </>
+        ) : (
+          <>
+            {/* Role Distribution */}
+            <div className="card">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">User Distribution</h2>
+              <div className="flex justify-center">
+                <div className="w-64 h-64">
+                  <Doughnut data={roleChartData} options={{ maintainAspectRatio: true }} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Department Attendance */}
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Today's Attendance by Department</h2>
-          <Bar
-            data={departmentChartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: true,
-              plugins: {
-                legend: {
-                  display: false,
-                },
-              },
-            }}
-          />
-        </div>
+            {/* Department Attendance */}
+            <div className="card">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Today's Attendance by Department</h2>
+              <Bar
+                data={departmentChartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  plugins: {
+                    legend: {
+                      display: false,
+                    },
+                  },
+                }}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Recent Attendance */}

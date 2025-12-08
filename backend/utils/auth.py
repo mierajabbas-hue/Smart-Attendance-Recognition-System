@@ -129,3 +129,49 @@ async def get_current_active_admin(
     if not current_admin.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_admin
+
+
+async def get_admin_from_query_token(
+    token: Optional[str] = None,
+    db: Session = Depends(get_db)
+) -> Admin:
+    """
+    Get admin user from query parameter token
+    Used for endpoints that need to work with img src tags
+
+    Args:
+        token: JWT token from query parameter
+        db: Database session
+
+    Returns:
+        Admin user object
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token required",
+        )
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+
+    username = decode_access_token(token)
+    if username is None:
+        raise credentials_exception
+
+    admin = db.query(Admin).filter(Admin.username == username).first()
+    if admin is None:
+        raise credentials_exception
+
+    if not admin.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+
+    return admin

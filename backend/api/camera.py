@@ -1,26 +1,29 @@
 """
 Camera and Live Feed API endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from backend.database.connection import get_db
 from backend.models.models import Admin, User, AttendanceLog, UnknownFace
 from backend.services.camera_service import camera_service
 from backend.services.face_recognition_service import face_recognition_service
-from backend.utils.auth import get_current_active_admin
+from backend.utils.auth import get_current_active_admin, get_admin_from_query_token
 from datetime import datetime, timedelta
 import asyncio
+from typing import Optional
 
 router = APIRouter(prefix="/camera", tags=["Camera"])
 
 
 @router.get("/feed")
 async def video_feed(
-    current_admin: Admin = Depends(get_current_active_admin)
+    token: str = Query(...),
+    current_admin: Admin = Depends(get_admin_from_query_token)
 ):
     """
     Stream live video feed with face recognition
+    Requires token as query parameter for img src compatibility
     """
     return StreamingResponse(
         camera_service.generate_frames(recognize=True),

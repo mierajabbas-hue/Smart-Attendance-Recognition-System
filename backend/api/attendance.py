@@ -35,6 +35,32 @@ async def log_attendance(
             detail="User not found"
         )
 
+    # Time restrictions for students
+    if user.role == "student":
+        now = datetime.now()
+        current_time = now.time()
+
+        # Sign-in allowed: 8:30 AM to 9:00 AM
+        signin_start = datetime.strptime("08:30", "%H:%M").time()
+        signin_end = datetime.strptime("09:00", "%H:%M").time()
+
+        # Logout allowed: 1:30 PM to 2:00 PM
+        logout_start = datetime.strptime("13:30", "%H:%M").time()
+        logout_end = datetime.strptime("14:00", "%H:%M").time()
+
+        if attendance_data.event_type == "entry":
+            if not (signin_start <= current_time <= signin_end):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Students can only sign in between 8:30 AM and 9:00 AM. Current time: {current_time.strftime('%I:%M %p')}"
+                )
+        elif attendance_data.event_type == "exit":
+            if not (logout_start <= current_time <= logout_end):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Students can only log out between 1:30 PM and 2:00 PM. Current time: {current_time.strftime('%I:%M %p')}"
+                )
+
     # Create attendance log
     attendance_log = AttendanceLog(
         user_id=attendance_data.user_id,
@@ -55,7 +81,7 @@ async def log_attendance(
 @router.get("/", response_model=List[AttendanceLogResponse])
 async def get_attendance_logs(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 50,
     user_id: Optional[int] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
@@ -65,7 +91,9 @@ async def get_attendance_logs(
     """
     Get attendance logs with optional filtering
     """
-    query = db.query(AttendanceLog)
+    from sqlalchemy.orm import joinedload
+
+    query = db.query(AttendanceLog).options(joinedload(AttendanceLog.user))
 
     if user_id:
         query = query.filter(AttendanceLog.user_id == user_id)
@@ -77,10 +105,6 @@ async def get_attendance_logs(
         query = query.filter(AttendanceLog.timestamp <= end_date)
 
     logs = query.order_by(AttendanceLog.timestamp.desc()).offset(skip).limit(limit).all()
-
-    # Load user data for each log
-    for log in logs:
-        log.user = db.query(User).filter(User.id == log.user_id).first()
 
     return logs
 
@@ -135,15 +159,14 @@ async def get_attendance_stats(
 
     by_role = {role: count for role, count in by_role_results}
 
-    # Recent entries (last 10)
+    # Recent entries (last 10) with eager loading
+    from sqlalchemy.orm import joinedload
+
     recent_entries = db.query(AttendanceLog)\
+        .options(joinedload(AttendanceLog.user))\
         .order_by(AttendanceLog.timestamp.desc())\
         .limit(10)\
         .all()
-
-    # Load user data for recent entries
-    for log in recent_entries:
-        log.user = db.query(User).filter(User.id == log.user_id).first()
 
     return AttendanceStats(
         total_today=total_today,

@@ -11,7 +11,7 @@ from backend.database.connection import get_db
 from backend.models.models import Admin, User
 from backend.models.schemas import UserCreate, UserResponse, UserUpdate, FileUploadResponse
 from backend.utils.auth import get_current_active_admin
-from backend.services.face_recognition_service import face_recognition_service
+from backend.services.face_recognition_service import face_recognition_service, FACE_RECOGNITION_AVAILABLE
 from backend.config import settings
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -62,23 +62,25 @@ async def create_user(
     with open(photo_path, "wb") as buffer:
         shutil.copyfileobj(photo.file, buffer)
 
-    # Validate face in image
-    is_valid, message = face_recognition_service.validate_face_image(photo_path)
-    if not is_valid:
-        os.remove(photo_path)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=message
-        )
+    # Only process face recognition if libraries are available
+    if FACE_RECOGNITION_AVAILABLE:
+        # Validate face in image
+        is_valid, message = face_recognition_service.validate_face_image(photo_path)
+        if not is_valid:
+            os.remove(photo_path)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=message
+            )
 
-    # Create face encoding
-    face_encoding = face_recognition_service.create_face_encoding(photo_path)
-    if face_encoding is None:
-        os.remove(photo_path)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not generate face encoding"
-        )
+        # Create face encoding
+        face_encoding = face_recognition_service.create_face_encoding(photo_path)
+        if face_encoding is None:
+            os.remove(photo_path)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Could not generate face encoding"
+            )
 
     # Create new user
     new_user = User(
@@ -94,18 +96,19 @@ async def create_user(
     db.commit()
     db.refresh(new_user)
 
-    # Save face encoding
-    encoding_path = face_recognition_service.save_face_encoding(
-        new_user.id,
-        new_user.name,
-        face_encoding
-    )
-    new_user.face_encoding_path = encoding_path
-    db.commit()
-    db.refresh(new_user)
+    # Save face encoding only if available
+    if FACE_RECOGNITION_AVAILABLE:
+        encoding_path = face_recognition_service.save_face_encoding(
+            new_user.id,
+            new_user.name,
+            face_encoding
+        )
+        new_user.face_encoding_path = encoding_path
+        db.commit()
+        db.refresh(new_user)
 
-    # Reload known faces
-    face_recognition_service.reload_known_faces()
+        # Reload known faces
+        face_recognition_service.reload_known_faces()
 
     return new_user
 
@@ -113,7 +116,7 @@ async def create_user(
 @router.get("/", response_model=List[UserResponse])
 async def get_users(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 50,
     role: Optional[str] = None,
     department: Optional[str] = None,
     db: Session = Depends(get_db),
