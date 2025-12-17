@@ -17,9 +17,8 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     libglib2.0-0 \
     libx11-dev \
-    libatlas-base-dev \
+    libopenblas-dev \
     liblapack-dev \
-    libblas-dev \
     libhdf5-dev \
     gfortran \
     && rm -rf /var/lib/apt/lists/*
