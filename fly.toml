@@ -1,6 +1,6 @@
 # Fly.io configuration for Smart Attendance & Recognition System Backend
 
-app = "attendance-recognition-backend"
+app = "attendance_recognition_backend"
 primary_region = "ord"  # Chicago - change to your preferred region
 
 [build]
