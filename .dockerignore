@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Frontend
+frontend/
+node_modules/
+
+# Development
+.git/
+.gitignore
+*.md
+tests/
+.vscode/
+.idea/
+
+# Local data
+uploads/*
+logs/*
+database/local.db
+
+# Environment
+.env
+.env.local
+
+# Documentation
+README.md
+QUICKSTART.md
+SETUP_DEMO.md
+SUPABASE_SETUP.md
+
+# Scripts
+*.sh
+*.bat
+setup_*.py
+generate_sample_data.py
+migrate_to_supabase.py
+test_user_creation.py
+quick_setup.py
