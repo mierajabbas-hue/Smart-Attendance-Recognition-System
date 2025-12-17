@@ -1,6 +1,6 @@
 # Fly.io configuration for Smart Attendance & Recognition System Backend
 
-app = "attendance_recognition_backend"
+app = "smart-attendance-recognition-system"
 primary_region = "ord"  # Chicago - change to your preferred region
 
 [build]
@@ -29,9 +29,4 @@ primary_region = "ord"  # Chicago - change to your preferred region
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 256
-
-[mounts]
-  source = "attendance_data"
-  destination = "/app/uploads"
-  initial_size = "1gb"
+  memory_mb = 1024

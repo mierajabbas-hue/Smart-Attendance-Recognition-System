@@ -26,7 +26,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY backend/ ./backend/
 COPY models/ ./models/
-COPY .env.example .env
 
 # Create necessary directories
 RUN mkdir -p uploads logs
