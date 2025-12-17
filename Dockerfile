@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
+    pkg-config \
     libopencv-dev \
     libboost-all-dev \
     libsm6 \
@@ -15,6 +16,12 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     libgomp1 \
     libglib2.0-0 \
+    libx11-dev \
+    libatlas-base-dev \
+    liblapack-dev \
+    libblas-dev \
+    libhdf5-dev \
+    gfortran \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
