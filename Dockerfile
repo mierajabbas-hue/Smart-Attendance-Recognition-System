@@ -25,10 +25,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY backend/ ./backend/
-COPY models/ ./models/
 
 # Create necessary directories
-RUN mkdir -p uploads logs
+RUN mkdir -p uploads logs models/face_embeddings
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
