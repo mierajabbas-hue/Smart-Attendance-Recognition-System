@@ -1,7 +1,7 @@
 """
 Camera and Live Feed API endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from backend.database.connection import get_db
@@ -12,6 +12,9 @@ from backend.utils.auth import get_current_active_admin, get_admin_from_query_to
 from datetime import datetime, timedelta
 import asyncio
 from typing import Optional
+import cv2
+import numpy as np
+from io import BytesIO
 
 router = APIRouter(prefix="/camera", tags=["Camera"])
 
@@ -142,3 +145,74 @@ async def reload_known_faces(
         "message": "Face encodings reloaded successfully",
         "total_faces": len(face_recognition_service.known_face_encodings)
     }
+
+
+@router.post("/recognize-upload")
+async def recognize_uploaded_image(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(get_current_active_admin)
+):
+    """
+    Perform face recognition on an uploaded image from browser camera
+    """
+    try:
+        # Read the uploaded file
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            raise HTTPException(status_code=400, detail="Could not decode image")
+
+        # Perform face recognition
+        results = face_recognition_service.recognize_faces(frame)
+
+        # Log attendance for recognized faces
+        logged_users = []
+        unknown_count = 0
+
+        for result in results:
+            if result["is_recognized"]:
+                user_id = result["user_id"]
+
+                # Check if user was already logged recently (within last 5 minutes)
+                five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+                recent_log = db.query(AttendanceLog)\
+                    .filter(
+                        AttendanceLog.user_id == user_id,
+                        AttendanceLog.timestamp >= five_minutes_ago
+                    )\
+                    .first()
+
+                if not recent_log:
+                    # Log new attendance
+                    attendance_log = AttendanceLog(
+                        user_id=user_id,
+                        event_type="entry",
+                        camera_id="browser",
+                        confidence=result["confidence"]
+                    )
+                    db.add(attendance_log)
+                    logged_users.append(result["name"])
+
+            else:
+                # Log unknown face
+                unknown_face = UnknownFace(
+                    camera_id="browser"
+                )
+                db.add(unknown_face)
+                unknown_count += 1
+
+        db.commit()
+
+        return {
+            "total_faces": len(results),
+            "recognized": len(logged_users),
+            "unknown": unknown_count,
+            "logged_users": logged_users,
+            "results": results
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
