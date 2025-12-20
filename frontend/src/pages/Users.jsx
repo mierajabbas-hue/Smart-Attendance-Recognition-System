@@ -3,6 +3,14 @@ import { Plus, Search, Edit, Trash2, Upload, Eye, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usersAPI } from '../services/api';
 
+// Get API base URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-attendance-backend-green-glade-4681.fly.dev/api/v1';
+const getPhotoUrl = (photoPath) => {
+  if (!photoPath) return null;
+  const filename = photoPath.split('/').pop();
+  return API_BASE_URL.replace('/api/v1', '') + `/uploads/${filename}`;
+};
+
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -452,7 +460,7 @@ const Users = () => {
               <div className="md:col-span-1 flex flex-col items-center">
                 {selectedUser.photo_path ? (
                   <img
-                    src={`http://localhost:8000/uploads/${selectedUser.photo_path.split('/').pop()}`}
+                    src={getPhotoUrl(selectedUser.photo_path)}
                     alt={selectedUser.name}
                     className="w-48 h-48 object-cover rounded-lg border-2 border-gray-300 shadow-md"
                     onError={(e) => {
