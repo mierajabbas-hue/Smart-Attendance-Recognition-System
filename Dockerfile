@@ -38,10 +38,10 @@ RUN mkdir -p uploads logs models/face_embeddings
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV HOST=0.0.0.0
-ENV PORT=8080
+ENV PORT=10000
 
 # Expose port
-EXPOSE 8080
+EXPOSE 10000
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run the application (use $PORT env var for flexibility)
+CMD python -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000}

@@ -1,0 +1,38 @@
+services:
+  # Backend API Service
+  - type: web
+    name: smart-attendance-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-attendance-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: DEBUG
+        value: false
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: CORS_ORIGINS
+        value: '["*"]'
+
+databases:
+  # PostgreSQL Database
+  - name: smart-attendance-db
+    plan: free
+    databaseName: attendance
+    user: attendance_user
