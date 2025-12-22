@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Production backend URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://smart-attendance-backend-green-glade-4681.fly.dev/api/v1';
+// Backend URL - using localhost for now (Fly.io trial ended)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 // Debug: Log the API URL being used
 console.log('🔗 API Base URL:', API_BASE_URL);
