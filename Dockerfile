@@ -4,29 +4,23 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for face recognition and OpenCV
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    pkg-config \
-    libopencv-dev \
-    libboost-all-dev \
+# Install only minimal system dependencies (no dev packages)
+# This significantly reduces memory usage during build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
+    libgl1 \
     libglib2.0-0 \
-    libx11-dev \
-    libopenblas-dev \
-    liblapack-dev \
-    libhdf5-dev \
-    gfortran \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
+# Use --no-cache-dir to reduce memory usage
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
