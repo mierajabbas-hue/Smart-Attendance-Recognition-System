@@ -39,4 +39,5 @@ ENV PORT=10000
 EXPOSE 10000
 
 # Run the application (use $PORT env var for flexibility)
-CMD python -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000}
+# Use shell form to allow environment variable expansion
+CMD ["sh", "-c", "python -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
