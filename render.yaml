@@ -3,7 +3,7 @@ services:
   - type: web
     name: smart-attendance-backend
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.minimal
     plan: free
     region: oregon
     branch: main
