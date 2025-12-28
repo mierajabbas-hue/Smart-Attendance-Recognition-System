@@ -14,9 +14,7 @@ services:
       - key: HOST
         value: 0.0.0.0
       - key: DATABASE_URL
-        fromDatabase:
-          name: smart-attendance-db
-          property: connectionString
+        value: sqlite:///./database/attendance.db
       - key: SECRET_KEY
         generateValue: true
       - key: ALGORITHM
@@ -29,10 +27,3 @@ services:
         value: 1
       - key: CORS_ORIGINS
         value: '["*"]'
-
-databases:
-  # PostgreSQL Database
-  - name: smart-attendance-db
-    plan: free
-    databaseName: attendance
-    user: attendance_user
