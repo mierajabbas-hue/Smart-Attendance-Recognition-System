@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Photo Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        img {
+            max-width: 400px;
+            border: 2px solid #333;
+            margin: 20px 0;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Photo Test</h1>
+
+    <h2>Test 1: Direct ngrok URL</h2>
+    <img
+        src="https://stacee-melodious-jollily.ngrok-free.dev/api/v1/users/1/photo"
+        alt="User 1 Photo"
+        onload="document.getElementById('status1').innerHTML = '✅ Image loaded successfully!'; document.getElementById('status1').className = 'success';"
+        onerror="document.getElementById('status1').innerHTML = '❌ Failed to load image'; document.getElementById('status1').className = 'error';"
+    />
+    <p id="status1">Loading...</p>
+
+    <h2>Test 2: Direct upload folder (old method)</h2>
+    <img
+        src="https://stacee-melodious-jollily.ngrok-free.dev/uploads/STU0001_20251229_165239.png"
+        alt="Direct upload"
+        onload="document.getElementById('status2').innerHTML = '✅ Image loaded successfully!'; document.getElementById('status2').className = 'success';"
+        onerror="document.getElementById('status2').innerHTML = '❌ Failed to load image'; document.getElementById('status2').className = 'error';"
+    />
+    <p id="status2">Loading...</p>
+
+    <h2>Debug Info</h2>
+    <button onclick="testAPI()">Test API Endpoint</button>
+    <pre id="apiResult"></pre>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('apiResult');
+            result.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('https://stacee-melodious-jollily.ngrok-free.dev/api/v1/users/1/photo', {
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+
+                result.textContent = `Status: ${response.status} ${response.statusText}\n`;
+                result.textContent += `Content-Type: ${response.headers.get('content-type')}\n`;
+                result.textContent += `Content-Length: ${response.headers.get('content-length')} bytes\n`;
+
+                if (response.ok) {
+                    result.textContent += '\n✅ API endpoint is working!';
+                } else {
+                    result.textContent += '\n❌ API returned error';
+                    const text = await response.text();
+                    result.textContent += `\nError: ${text}`;
+                }
+            } catch (error) {
+                result.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

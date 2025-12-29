@@ -27,6 +27,7 @@ const Users = () => {
     photo: null,
   });
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [userPhotoUrl, setUserPhotoUrl] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -83,9 +84,32 @@ const Users = () => {
     }
   };
 
-  const handleViewProfile = (user) => {
+  const handleViewProfile = async (user) => {
     setSelectedUser(user);
     setShowProfileModal(true);
+
+    // Fetch photo as blob and convert to data URL to bypass ngrok header issue
+    if (user.photo_path) {
+      try {
+        const response = await fetch(getPhotoUrl(user.id), {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const dataUrl = URL.createObjectURL(blob);
+          setUserPhotoUrl(dataUrl);
+        } else {
+          setUserPhotoUrl(null);
+        }
+      } catch (error) {
+        console.error('Failed to load photo:', error);
+        setUserPhotoUrl(null);
+      }
+    } else {
+      setUserPhotoUrl(null);
+    }
   };
 
   const handlePhotoChange = (e) => {
