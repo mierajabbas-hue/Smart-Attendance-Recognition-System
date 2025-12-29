@@ -481,16 +481,19 @@ const Users = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Photo Section */}
               <div className="md:col-span-1 flex flex-col items-center">
-                {selectedUser.photo_path ? (
+                {selectedUser.photo_path && userPhotoUrl ? (
                   <img
-                    src={getPhotoUrl(selectedUser.id)}
+                    src={userPhotoUrl}
                     alt={selectedUser.name}
                     className="w-48 h-48 object-cover rounded-lg border-2 border-gray-300 shadow-md"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="48" fill="%23999">' + selectedUser.name.charAt(0).toUpperCase() + '</text></svg>';
-                    }}
                   />
+                ) : selectedUser.photo_path ? (
+                  <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-gray-300">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-600">Loading photo...</p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="w-48 h-48 bg-gray-200 rounded-lg border-2 border-gray-300 flex items-center justify-center">
                     <span className="text-gray-400 text-4xl">
