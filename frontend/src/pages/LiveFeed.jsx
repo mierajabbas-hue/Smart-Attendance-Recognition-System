@@ -136,84 +136,83 @@ const LiveFeed = () => {
         <p className="text-gray-600 mt-1">Real-time face recognition and attendance logging</p>
       </div>
 
-      {/* Camera Controls */}
+      {/* Camera Feed - Main Section */}
       <div className="card">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <div className={`w-3 h-3 rounded-full ${browserCameraActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-sm font-medium text-gray-700">
-              {browserCameraActive ? 'Camera Active' : 'Camera Inactive'}
-            </span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-2xl font-bold text-gray-900">Camera Feed</h2>
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${browserCameraActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              <span className="text-sm font-medium text-gray-700">
+                {browserCameraActive ? 'Live' : 'Inactive'}
+              </span>
+            </div>
           </div>
 
-          <div className="flex-1"></div>
-
-          <button
-            onClick={handleReloadFaces}
-            className="btn btn-secondary flex items-center"
-          >
-            <RefreshCw className="w-5 h-5 mr-2" />
-            Reload Faces
-          </button>
-
-          {browserCameraActive ? (
+          <div className="flex items-center gap-3">
             <button
-              onClick={stopBrowserCamera}
-              className="btn btn-danger flex items-center"
+              onClick={handleReloadFaces}
+              className="btn btn-secondary flex items-center"
             >
-              <Square className="w-5 h-5 mr-2" />
-              Stop Camera
+              <RefreshCw className="w-5 h-5 mr-2" />
+              Reload Faces
             </button>
-          ) : (
-            <button
-              onClick={startBrowserCamera}
-              className="btn btn-primary flex items-center"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Start Camera
-            </button>
-          )}
 
-          <button
-            onClick={handleRecognize}
-            disabled={!browserCameraActive || recognizing}
-            className="btn btn-primary flex items-center disabled:opacity-50"
-          >
-            <Camera className="w-5 h-5 mr-2" />
-            {recognizing ? 'Recognizing...' : 'Recognize Now'}
-          </button>
+            {browserCameraActive ? (
+              <button
+                onClick={stopBrowserCamera}
+                className="btn btn-danger flex items-center"
+              >
+                <Square className="w-5 h-5 mr-2" />
+                Stop Camera
+              </button>
+            ) : (
+              <button
+                onClick={startBrowserCamera}
+                className="btn btn-primary flex items-center"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Start Camera
+              </button>
+            )}
+
+            <button
+              onClick={handleRecognize}
+              disabled={!browserCameraActive || recognizing}
+              className="btn btn-primary flex items-center disabled:opacity-50"
+            >
+              <Camera className="w-5 h-5 mr-2" />
+              {recognizing ? 'Recognizing...' : 'Recognize Now'}
+            </button>
+          </div>
         </div>
+
+        <div className="bg-gray-900 rounded-lg overflow-hidden" style={{ minHeight: '500px' }}>
+          {browserCameraActive ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-contain transform scale-x-[-1]"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full" style={{ minHeight: '500px' }}>
+              <div className="text-center">
+                <Webcam className="w-20 h-20 text-gray-600 mx-auto mb-4" />
+                <p className="text-xl text-gray-400 mb-2">Camera is not active</p>
+                <p className="text-sm text-gray-500">Click "Start Camera" to begin face recognition</p>
+              </div>
+            </div>
+          )}
+        </div>
+        <canvas ref={canvasRef} className="hidden" />
       </div>
 
-      {/* Video Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <div className="card">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Camera Feed</h2>
-            <div className="bg-gray-900 rounded-lg overflow-hidden aspect-video flex items-center justify-center">
-              {browserCameraActive ? (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-contain transform scale-x-[-1]"
-                />
-              ) : (
-                <div className="text-center">
-                  <Webcam className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">Camera is not active</p>
-                  <p className="text-sm text-gray-500 mt-2">Click "Start Camera" to begin</p>
-                </div>
-              )}
-            </div>
-            <canvas ref={canvasRef} className="hidden" />
-          </div>
-        </div>
-
-        {/* Recognition Results */}
+      {/* Recognition Results & Instructions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div className="card">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Last Recognition</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Last Recognition Results</h2>
             {lastRecognition ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
@@ -250,16 +249,32 @@ const LiveFeed = () => {
             )}
           </div>
 
-          <div className="card bg-blue-50 border border-blue-200">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">How it works</h3>
-            <ul className="text-sm text-blue-800 space-y-2">
-              <li>1. Click "Start Camera" to activate your device camera</li>
-              <li>2. Allow browser access to your camera when prompted</li>
-              <li>3. Click "Recognize Now" to detect and identify faces</li>
-              <li>4. Attendance is logged automatically for recognized users</li>
-              <li>5. Unknown faces are recorded separately</li>
-            </ul>
-          </div>
+        </div>
+
+        <div className="card bg-blue-50 border border-blue-200">
+          <h3 className="text-xl font-semibold text-blue-900 mb-3">How to Use</h3>
+          <ul className="text-sm text-blue-800 space-y-2">
+            <li className="flex items-start">
+              <span className="font-bold mr-2">1.</span>
+              <span>Click "Start Camera" to activate your device camera</span>
+            </li>
+            <li className="flex items-start">
+              <span className="font-bold mr-2">2.</span>
+              <span>Allow browser access to your camera when prompted</span>
+            </li>
+            <li className="flex items-start">
+              <span className="font-bold mr-2">3.</span>
+              <span>Click "Recognize Now" to detect and identify faces</span>
+            </li>
+            <li className="flex items-start">
+              <span className="font-bold mr-2">4.</span>
+              <span>Attendance is logged automatically for recognized users</span>
+            </li>
+            <li className="flex items-start">
+              <span className="font-bold mr-2">5.</span>
+              <span>Unknown faces are recorded separately</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
