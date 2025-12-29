@@ -3,8 +3,8 @@ import { Plus, Search, Edit, Trash2, Upload, Eye, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { usersAPI } from '../services/api';
 
-// Get API base URL - using localhost for now (Fly.io trial ended)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// Get API base URL - using ngrok tunnel to local backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://stacee-melodious-jollily.ngrok-free.dev/api/v1';
 const getPhotoUrl = (photoPath) => {
   if (!photoPath) return null;
   const filename = photoPath.split('/').pop();
