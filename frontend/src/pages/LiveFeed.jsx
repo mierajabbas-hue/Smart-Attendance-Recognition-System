@@ -1,107 +1,52 @@
-import { useState, useEffect, useRef } from 'react';
-import { Camera, AlertCircle, RefreshCw, Play, Square, Webcam } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Camera, AlertCircle, RefreshCw, Upload, X, Image } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cameraAPI } from '../services/api';
 
 const LiveFeed = () => {
   const [recognizing, setRecognizing] = useState(false);
   const [lastRecognition, setLastRecognition] = useState(null);
-  const [browserCameraActive, setBrowserCameraActive] = useState(false);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const canvasRef = useRef(null);
+  const [uploadedImage, setUploadedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    return () => {
-      stopBrowserCamera();
-    };
-  }, []);
-
-  const startBrowserCamera = async () => {
-    try {
-      // Check if mediaDevices is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        toast.error('Camera access is not supported in your browser. Please use a modern browser like Chrome, Firefox, or Safari.');
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file');
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
-        }
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setBrowserCameraActive(true);
-        toast.success('Camera started successfully!');
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image size must be less than 10MB');
+        return;
       }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
 
-      // Provide specific error messages based on error type
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        toast.error('Camera permission denied. Please click the camera icon in your browser address bar and allow camera access.');
-      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-        toast.error('No camera found. Please make sure your device has a camera connected.');
-      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-        toast.error('Camera is already in use by another application. Please close other apps using the camera.');
-      } else if (error.name === 'OverconstrainedError') {
-        toast.error('Camera does not support the requested settings. Trying with default settings...');
-        // Retry with simpler constraints
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            streamRef.current = stream;
-            setBrowserCameraActive(true);
-            toast.success('Camera started with default settings!');
-          }
-        } catch (retryError) {
-          toast.error('Failed to start camera even with default settings.');
-        }
-      } else if (error.name === 'SecurityError') {
-        toast.error('Camera access blocked due to security settings. Make sure you are using HTTPS.');
-      } else {
-        toast.error(`Failed to access camera: ${error.message}`);
-      }
-    }
-  };
+      setUploadedImage(file);
 
-  const stopBrowserCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-      setBrowserCameraActive(false);
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-      toast.success('Camera stopped');
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+
+      toast.success('Image uploaded successfully');
     }
   };
 
   const handleRecognize = async () => {
-    if (!videoRef.current || !browserCameraActive) {
-      toast.error('Camera is not active');
+    if (!uploadedImage) {
+      toast.error('Please upload an image first');
       return;
     }
 
     setRecognizing(true);
     try {
-      const canvas = canvasRef.current || document.createElement('canvas');
-      const video = videoRef.current;
-
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0);
-
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
-      const result = await cameraAPI.recognizeUpload(blob);
+      const result = await cameraAPI.recognizeUpload(uploadedImage);
       setLastRecognition(result);
 
       if (result.recognized > 0) {
@@ -109,7 +54,7 @@ const LiveFeed = () => {
       } else if (result.total_faces > 0) {
         toast.warning(`Detected ${result.total_faces} unknown face(s)`);
       } else {
-        toast.info('No faces detected');
+        toast.info('No faces detected in the image');
       }
     } catch (error) {
       console.error('Recognition error:', error);
@@ -128,23 +73,31 @@ const LiveFeed = () => {
     }
   };
 
+  const handleClearImage = () => {
+    setUploadedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Live Camera Feed</h1>
-        <p className="text-gray-600 mt-1">Real-time face recognition and attendance logging</p>
+        <h1 className="text-3xl font-bold text-gray-900">Face Recognition</h1>
+        <p className="text-gray-600 mt-1">Upload a photo to recognize faces and log attendance</p>
       </div>
 
-      {/* Camera Feed - Main Section */}
+      {/* Upload Section */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <h2 className="text-2xl font-bold text-gray-900">Camera Feed</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Upload Photo</h2>
             <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${browserCameraActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+              <div className={`w-3 h-3 rounded-full ${uploadedImage ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
               <span className="text-sm font-medium text-gray-700">
-                {browserCameraActive ? 'Live' : 'Inactive'}
+                {uploadedImage ? 'Image Ready' : 'No Image'}
               </span>
             </div>
           </div>
@@ -158,54 +111,61 @@ const LiveFeed = () => {
               Reload Faces
             </button>
 
-            {browserCameraActive ? (
+            {uploadedImage && (
               <button
-                onClick={stopBrowserCamera}
+                onClick={handleClearImage}
                 className="btn btn-danger flex items-center"
               >
-                <Square className="w-5 h-5 mr-2" />
-                Stop Camera
-              </button>
-            ) : (
-              <button
-                onClick={startBrowserCamera}
-                className="btn btn-primary flex items-center"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Start Camera
+                <X className="w-5 h-5 mr-2" />
+                Clear Image
               </button>
             )}
 
             <button
+              onClick={() => fileInputRef.current?.click()}
+              className="btn btn-primary flex items-center"
+            >
+              <Upload className="w-5 h-5 mr-2" />
+              Choose Image
+            </button>
+
+            <button
               onClick={handleRecognize}
-              disabled={!browserCameraActive || recognizing}
+              disabled={!uploadedImage || recognizing}
               className="btn btn-primary flex items-center disabled:opacity-50"
             >
               <Camera className="w-5 h-5 mr-2" />
-              {recognizing ? 'Recognizing...' : 'Recognize Now'}
+              {recognizing ? 'Recognizing...' : 'Recognize Faces'}
             </button>
           </div>
         </div>
 
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+
         <div className="bg-gray-900 rounded-lg overflow-hidden" style={{ minHeight: '500px' }}>
-          {browserCameraActive ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-contain transform scale-x-[-1]"
+          {imagePreview ? (
+            <img
+              src={imagePreview}
+              alt="Uploaded for recognition"
+              className="w-full h-full object-contain"
+              style={{ minHeight: '500px' }}
             />
           ) : (
             <div className="flex items-center justify-center h-full" style={{ minHeight: '500px' }}>
               <div className="text-center">
-                <Webcam className="w-20 h-20 text-gray-600 mx-auto mb-4" />
-                <p className="text-xl text-gray-400 mb-2">Camera is not active</p>
-                <p className="text-sm text-gray-500">Click "Start Camera" to begin face recognition</p>
+                <Image className="w-20 h-20 text-gray-600 mx-auto mb-4" />
+                <p className="text-xl text-gray-400 mb-2">No image uploaded</p>
+                <p className="text-sm text-gray-500">Click "Choose Image" to upload a photo for face recognition</p>
               </div>
             </div>
           )}
         </div>
-        <canvas ref={canvasRef} className="hidden" />
       </div>
 
       {/* Recognition Results & Instructions */}
@@ -248,7 +208,6 @@ const LiveFeed = () => {
               </div>
             )}
           </div>
-
         </div>
 
         <div className="card bg-blue-50 border border-blue-200">
@@ -256,15 +215,15 @@ const LiveFeed = () => {
           <ul className="text-sm text-blue-800 space-y-2">
             <li className="flex items-start">
               <span className="font-bold mr-2">1.</span>
-              <span>Click "Start Camera" to activate your device camera</span>
+              <span>Click "Choose Image" to select a photo from your computer</span>
             </li>
             <li className="flex items-start">
               <span className="font-bold mr-2">2.</span>
-              <span>Allow browser access to your camera when prompted</span>
+              <span>The image will be displayed in the preview area</span>
             </li>
             <li className="flex items-start">
               <span className="font-bold mr-2">3.</span>
-              <span>Click "Recognize Now" to detect and identify faces</span>
+              <span>Click "Recognize Faces" to detect and identify people in the photo</span>
             </li>
             <li className="flex items-start">
               <span className="font-bold mr-2">4.</span>
@@ -272,9 +231,19 @@ const LiveFeed = () => {
             </li>
             <li className="flex items-start">
               <span className="font-bold mr-2">5.</span>
-              <span>Unknown faces are recorded separately</span>
+              <span>Unknown faces are recorded separately for review</span>
             </li>
           </ul>
+
+          <div className="mt-4 pt-4 border-t border-blue-300">
+            <h4 className="text-sm font-semibold text-blue-900 mb-2">💡 Tips:</h4>
+            <ul className="text-xs text-blue-700 space-y-1">
+              <li>• Use clear, well-lit photos for best results</li>
+              <li>• Photos can contain multiple people</li>
+              <li>• Supported formats: JPG, PNG, GIF</li>
+              <li>• Maximum file size: 10MB</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
