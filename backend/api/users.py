@@ -219,12 +219,13 @@ async def delete_user(
 
 
 @router.get("/{user_id}/photo")
+@router.head("/{user_id}/photo")
 async def get_user_photo(
     user_id: int,
     db: Session = Depends(get_db)
 ):
     """
-    Get user photo by user ID
+    Get user photo by user ID (supports GET and HEAD methods)
     """
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
@@ -239,4 +240,8 @@ async def get_user_photo(
             detail="Photo not found"
         )
 
-    return FileResponse(user.photo_path, media_type="image/png")
+    # Determine content type based on file extension
+    ext = user.photo_path.split('.')[-1].lower()
+    media_type = f"image/{ext}" if ext in ['png', 'jpg', 'jpeg', 'gif'] else "image/png"
+
+    return FileResponse(user.photo_path, media_type=media_type)
