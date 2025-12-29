@@ -12,6 +12,9 @@ const LiveFeed = () => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
+    // Auto-start camera when page loads
+    startCamera();
+
     return () => {
       stopCamera();
     };
