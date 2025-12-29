@@ -24,7 +24,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    attendance_logs = relationship("AttendanceLog", back_populates="user")
+    attendance_logs = relationship("AttendanceLog", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, user_id={self.user_id}, name={self.name}, role={self.role})>"
@@ -35,7 +35,7 @@ class AttendanceLog(Base):
     __tablename__ = "attendance_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     event_type = Column(String(20), default="entry")  # entry or exit
     camera_id = Column(String(50), default="default")
