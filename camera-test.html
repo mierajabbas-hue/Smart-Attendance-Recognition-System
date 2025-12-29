@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        video {
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            background: #000;
+            border-radius: 8px;
+            display: block;
+            margin: 20px auto;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.stop {
+            background: #dc3545;
+        }
+        button.stop:hover {
+            background: #c82333;
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .instructions {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 Laptop Camera Test</h1>
+
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Click the "Start Camera" button below</li>
+                <li>Your browser will ask for camera permission - click "Allow"</li>
+                <li>You should see yourself on the video feed</li>
+                <li>If it doesn't work, check the error message below</li>
+            </ol>
+        </div>
+
+        <div style="text-align: center;">
+            <button id="startBtn" onclick="startCamera()">▶️ Start Camera</button>
+            <button id="stopBtn" class="stop" onclick="stopCamera()" style="display: none;">⏹️ Stop Camera</button>
+        </div>
+
+        <div id="status"></div>
+
+        <video id="video" autoplay playsinline style="transform: scaleX(-1);"></video>
+
+        <div id="cameraInfo" style="display: none; margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 5px;">
+            <h3 style="margin-top: 0;">📷 Camera Information:</h3>
+            <p><strong>Resolution:</strong> <span id="resolution">-</span></p>
+            <p><strong>Status:</strong> <span id="cameraStatus">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const cameraInfo = document.getElementById('cameraInfo');
+
+        async function startCamera() {
+            try {
+                status.innerHTML = '<div class="status info">📡 Requesting camera access...</div>';
+
+                // Check if browser supports camera
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Your browser does not support camera access. Please use Chrome, Firefox, or Safari.');
+                }
+
+                // Request camera access
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                });
+
+                // Display video
+                video.srcObject = stream;
+
+                // Update UI
+                status.innerHTML = '<div class="status success">✅ Camera started successfully! You should see yourself above.</div>';
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                cameraInfo.style.display = 'block';
+
+                // Get video dimensions
+                video.onloadedmetadata = () => {
+                    document.getElementById('resolution').textContent =
+                        `${video.videoWidth} x ${video.videoHeight}`;
+                    document.getElementById('cameraStatus').textContent = 'Active';
+                };
+
+            } catch (error) {
+                console.error('Camera error:', error);
+
+                let errorMessage = 'Unknown error';
+                let helpText = '';
+
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage = 'Camera permission denied';
+                    helpText = `
+                        <p><strong>How to fix:</strong></p>
+                        <ol style="text-align: left; margin-left: 20px;">
+                            <li>Look for a camera icon in your browser's address bar</li>
+                            <li>Click on it and select "Allow"</li>
+                            <li>Refresh this page and try again</li>
+                        </ol>
+                    `;
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    errorMessage = 'No camera found';
+                    helpText = '<p>Make sure your laptop has a camera and it\'s not being used by another application.</p>';
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    errorMessage = 'Camera is already in use';
+                    helpText = '<p>Close other applications that might be using your camera (Zoom, Teams, Skype, etc.) and try again.</p>';
+                } else if (error.name === 'SecurityError') {
+                    errorMessage = 'Security error - HTTPS required';
+                    helpText = '<p>Camera access requires a secure connection. Make sure you\'re using https:// in the URL.</p>';
+                } else {
+                    errorMessage = error.message;
+                }
+
+                status.innerHTML = `
+                    <div class="status error">
+                        ❌ Error: ${errorMessage}
+                        ${helpText}
+                    </div>
+                `;
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+
+                status.innerHTML = '<div class="status info">⏹️ Camera stopped</div>';
+                startBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                cameraInfo.style.display = 'none';
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>

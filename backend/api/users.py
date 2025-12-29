@@ -2,6 +2,7 @@
 User Management API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
@@ -215,3 +216,27 @@ async def delete_user(
     face_recognition_service.reload_known_faces()
 
     return None
+
+
+@router.get("/{user_id}/photo")
+async def get_user_photo(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get user photo by user ID
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    if not user.photo_path or not os.path.exists(user.photo_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Photo not found"
+        )
+
+    return FileResponse(user.photo_path, media_type="image/png")

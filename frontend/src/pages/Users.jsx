@@ -5,10 +5,9 @@ import { usersAPI } from '../services/api';
 
 // Get API base URL - using ngrok tunnel to local backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://stacee-melodious-jollily.ngrok-free.dev/api/v1';
-const getPhotoUrl = (photoPath) => {
-  if (!photoPath) return null;
-  const filename = photoPath.split('/').pop();
-  return API_BASE_URL.replace('/api/v1', '') + `/uploads/${filename}`;
+const getPhotoUrl = (userId) => {
+  if (!userId) return null;
+  return `${API_BASE_URL}/users/${userId}/photo`;
 };
 
 const Users = () => {
@@ -460,7 +459,7 @@ const Users = () => {
               <div className="md:col-span-1 flex flex-col items-center">
                 {selectedUser.photo_path ? (
                   <img
-                    src={getPhotoUrl(selectedUser.photo_path)}
+                    src={getPhotoUrl(selectedUser.id)}
                     alt={selectedUser.name}
                     className="w-48 h-48 object-cover rounded-lg border-2 border-gray-300 shadow-md"
                     onError={(e) => {
