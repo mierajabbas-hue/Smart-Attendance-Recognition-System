@@ -19,6 +19,12 @@ const LiveFeed = () => {
 
   const startBrowserCamera = async () => {
     try {
+      // Check if mediaDevices is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error('Camera access is not supported in your browser. Please use a modern browser like Chrome, Firefox, or Safari.');
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -31,11 +37,37 @@ const LiveFeed = () => {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         setBrowserCameraActive(true);
-        toast.success('Camera started');
+        toast.success('Camera started successfully!');
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
-      toast.error('Failed to access camera. Please allow camera access in your browser.');
+
+      // Provide specific error messages based on error type
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        toast.error('Camera permission denied. Please click the camera icon in your browser address bar and allow camera access.');
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        toast.error('No camera found. Please make sure your device has a camera connected.');
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        toast.error('Camera is already in use by another application. Please close other apps using the camera.');
+      } else if (error.name === 'OverconstrainedError') {
+        toast.error('Camera does not support the requested settings. Trying with default settings...');
+        // Retry with simpler constraints
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            streamRef.current = stream;
+            setBrowserCameraActive(true);
+            toast.success('Camera started with default settings!');
+          }
+        } catch (retryError) {
+          toast.error('Failed to start camera even with default settings.');
+        }
+      } else if (error.name === 'SecurityError') {
+        toast.error('Camera access blocked due to security settings. Make sure you are using HTTPS.');
+      } else {
+        toast.error(`Failed to access camera: ${error.message}`);
+      }
     }
   };
 
